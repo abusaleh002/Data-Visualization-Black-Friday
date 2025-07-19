@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import data from '../BlackFriday.js'; // path may vary based on folder
+import data from './BlackFriday.js';
 
 const width = 900;
 const height = 550;
