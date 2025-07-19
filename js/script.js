@@ -1,14 +1,13 @@
 import * as d3 from 'd3';
+import data from '../BlackFriday.js'; // path may vary based on folder
 
 const width = 900;
 const height = 550;
 const margin = { top: 80, right: 30, bottom: 70, left: 80 };
 
-async function drawStackedBarChart(selectedFilter = 'All', filterType = 'City_Category') {
-  const data = await d3.json('BlackFriday.json');
-
+function drawStackedBarChart(selectedFilter = 'All', filterType = 'City_Category') {
   d3.select('#chart').html('');
-  d3.select('#filter-wrapper').remove();
+  d3.select('#filter-wrapper')?.remove();
 
   const svg = d3.select('#chart')
     .append('svg')
@@ -42,22 +41,10 @@ async function drawStackedBarChart(selectedFilter = 'All', filterType = 'City_Ca
   const subgroups = ['Male', 'Female'];
   const groups = aggregated.map(d => d.Age);
 
-  const x = d3.scaleBand()
-    .domain(groups)
-    .range([0, innerWidth])
-    .padding(0.2);
-
-  const y = d3.scaleLinear()
-    .domain([0, d3.max(aggregated, d => d.Male + d.Female)])
-    .nice()
-    .range([innerHeight, 0]);
-
-  const color = d3.scaleOrdinal()
-    .domain(subgroups)
-    .range(['#1f77b4', '#ff7f0e']);
-
-  const stackedData = d3.stack()
-    .keys(subgroups)(aggregated);
+  const x = d3.scaleBand().domain(groups).range([0, innerWidth]).padding(0.2);
+  const y = d3.scaleLinear().domain([0, d3.max(aggregated, d => d.Male + d.Female)]).nice().range([innerHeight, 0]);
+  const color = d3.scaleOrdinal().domain(subgroups).range(['#1f77b4', '#ff7f0e']);
+  const stackedData = d3.stack().keys(subgroups)(aggregated);
 
   const tooltip = d3.select('body')
     .append('div')
@@ -96,16 +83,12 @@ async function drawStackedBarChart(selectedFilter = 'All', filterType = 'City_Ca
       .style('left', (event.pageX + 10) + 'px')
       .style('top', (event.pageY - 28) + 'px');
     })
-    .on('mouseout', function () {
+    .on('mouseout', () => {
       tooltip.transition().duration(200).style('opacity', 0);
     });
 
-  chart.append('g')
-    .attr('transform', `translate(0, ${innerHeight})`)
-    .call(d3.axisBottom(x));
-
-  chart.append('g')
-    .call(d3.axisLeft(y));
+  chart.append('g').attr('transform', `translate(0, ${innerHeight})`).call(d3.axisBottom(x));
+  chart.append('g').call(d3.axisLeft(y));
 
   svg.append('text')
     .attr('x', width / 2)
@@ -130,60 +113,45 @@ async function drawStackedBarChart(selectedFilter = 'All', filterType = 'City_Ca
     .style('font-size', '14px')
     .text('Purchase');
 
-  const legend = svg.append('g')
-    .attr('transform', `translate(${width - 150}, ${margin.top})`);
-
+  const legend = svg.append('g').attr('transform', `translate(${width - 150}, ${margin.top})`);
   subgroups.forEach((gender, i) => {
-    const legendRow = legend.append('g')
-      .attr('transform', `translate(0, ${i * 20})`);
-
-    legendRow.append('rect')
-      .attr('width', 15)
-      .attr('height', 15)
-      .attr('fill', color(gender));
-
-    legendRow.append('text')
-      .attr('x', 20)
-      .attr('y', 12)
-      .text(gender)
-      .style('font-size', '12px')
-      .attr('alignment-baseline', 'middle');
+    const legendRow = legend.append('g').attr('transform', `translate(0, ${i * 20})`);
+    legendRow.append('rect').attr('width', 15).attr('height', 15).attr('fill', color(gender));
+    legendRow.append('text').attr('x', 20).attr('y', 12).text(gender).style('font-size', '12px').attr('alignment-baseline', 'middle');
   });
 }
 
-d3.json('BlackFriday.json').then(data => {
-  const cities = Array.from(new Set(data.map(d => d.City_Category))).sort();
-  const occupations = Array.from(new Set(data.map(d => d.Occupation))).sort();
+const cities = Array.from(new Set(data.map(d => d.City_Category))).sort();
+const occupations = Array.from(new Set(data.map(d => d.Occupation))).sort();
 
-  const filterWrapper = d3.select('body')
-    .insert('div', ':first-child')
-    .attr('id', 'filter-wrapper')
-    .style('text-align', 'center')
-    .style('margin-bottom', '10px')
-    .html('<label>City Category: </label><select id="cityFilter"></select> ' +
-          '<label>Occupation: </label><select id="occupationFilter"></select>');
+const filterWrapper = d3.select('body')
+  .insert('div', ':first-child')
+  .attr('id', 'filter-wrapper')
+  .style('text-align', 'center')
+  .style('margin-bottom', '10px')
+  .html('<label>City Category: </label><select id="cityFilter"></select> ' +
+        '<label>Occupation: </label><select id="occupationFilter"></select>');
 
-  d3.select('#cityFilter')
-    .selectAll('option')
-    .data(['All', ...cities])
-    .enter()
-    .append('option')
-    .text(d => d);
+d3.select('#cityFilter')
+  .selectAll('option')
+  .data(['All', ...cities])
+  .enter()
+  .append('option')
+  .text(d => d);
 
-  d3.select('#occupationFilter')
-    .selectAll('option')
-    .data(['All', ...occupations])
-    .enter()
-    .append('option')
-    .text(d => d);
+d3.select('#occupationFilter')
+  .selectAll('option')
+  .data(['All', ...occupations])
+  .enter()
+  .append('option')
+  .text(d => d);
 
-  d3.select('#cityFilter').on('change', function () {
-    drawStackedBarChart(this.value, 'City_Category');
-  });
-
-  d3.select('#occupationFilter').on('change', function () {
-    drawStackedBarChart(this.value, 'Occupation');
-  });
-
-  drawStackedBarChart();
+d3.select('#cityFilter').on('change', function () {
+  drawStackedBarChart(this.value, 'City_Category');
 });
+
+d3.select('#occupationFilter').on('change', function () {
+  drawStackedBarChart(this.value, 'Occupation');
+});
+
+drawStackedBarChart();
